@@ -534,20 +534,9 @@ a:hover {
   padding-top: 2.5rem;
 }
 
-@media (min-width: 62rem) {
-  .recipe-body {
-    grid-template-columns: minmax(0, 1fr) 14rem;
-  }
-
-  .toc {
-    order: 2;
-  }
-}
-
+/* Mobile: a compact, static row of pills. Sticking it here would only cover the
+   recipe it links into, and it stays out of the way at the top of the article. */
 .toc {
-  position: sticky;
-  top: 6rem;
-  align-self: start;
   font-size: 0.875rem;
 }
 
@@ -561,23 +550,60 @@ a:hover {
 }
 
 .toc ol {
-  margin: 0;
-  padding: 0 0 0 0.9rem;
-  list-style: none;
-  border-left: 1px solid var(--border);
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .toc a {
+  display: block;
+  padding: 0.3rem 0.7rem;
   color: var(--text-soft);
+  background: var(--bg-subtle);
+  border-radius: 999px;
   text-decoration: none;
+  transition: color var(--transition), background var(--transition);
 }
 
 .toc a:hover,
 .toc a.is-current {
   color: var(--accent);
+}
+
+@media (min-width: 62rem) {
+  .recipe-body {
+    grid-template-columns: minmax(0, 1fr) 14rem;
+  }
+
+  /* Desktop: a sticky sidebar rail alongside the recipe. */
+  .toc {
+    order: 2;
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+
+  .toc ol {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0.9rem;
+    border-left: 1px solid var(--border);
+  }
+
+  .toc a {
+    padding: 0;
+    background: none;
+    border-radius: 0;
+  }
+
+  .toc a.is-current {
+    font-weight: 500;
+  }
 }
 
 /* ==========================================================================

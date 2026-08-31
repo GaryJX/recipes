@@ -9,7 +9,8 @@ into the website, so adding a recipe never involves touching HTML.
 ## Adding a recipe
 
 Create a new markdown file in `recipes/`. The filename becomes the URL, so use lowercase
-words separated by hyphens (`recipes/mapo-tofu.md` → `/recipes/mapo-tofu/`).
+words separated by hyphens (`recipes/mapo-tofu.md` → `https://garyjx.github.io/recipes/mapo-tofu/`).
+The names `index`, `404`, and `assets` are reserved and the build will reject them.
 
 Follow the shape the existing recipes use:
 
@@ -79,6 +80,10 @@ publishes it to GitHub Pages.
 
 This needs to be enabled once: in the repository's **Settings → Pages**, set **Source**
 to **GitHub Actions**.
+
+The workflow passes the Pages mount point to the build as `SITE_BASE`. Every page links
+relatively except `404.html`, which GitHub serves in response to arbitrary URLs and so
+has to reference its assets absolutely.
 
 ## How it's put together
 

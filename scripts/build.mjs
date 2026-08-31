@@ -15,6 +15,16 @@ const SITE = {
   description: 'A personal collection of home-cooked recipes.',
 };
 
+/**
+ * Where the site is mounted, e.g. "/recipes/" on project Pages. Every page except
+ * 404.html uses relative links, but GitHub serves 404.html for arbitrary deep URLs,
+ * so that one page has to reference assets absolutely.
+ */
+const BASE_PATH = `/${(process.env.SITE_BASE ?? '/').replace(/^\/+|\/+$/g, '')}/`.replace('//', '/');
+
+/** Page names the generator itself owns, so a recipe slug can never shadow them. */
+const RESERVED_SLUGS = new Set(['assets', 'index', '404']);
+
 const escapeHtml = (value = '') =>
   String(value).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -160,7 +170,7 @@ function renderIndex(recipes) {
         .join(' ')
         .toLowerCase();
       return `<li class="card-item" data-tags="${escapeHtml(recipe.tags.join('|'))}" data-search="${escapeHtml(searchText)}">
-  <a class="card" href="recipes/${recipe.slug}/">
+  <a class="card" href="${recipe.slug}/">
     <h2 class="card-title">${escapeHtml(recipe.title)}</h2>
     ${recipe.subtitle ? `<p class="card-subtitle">${escapeHtml(recipe.subtitle)}</p>` : ''}
     <p class="card-text">${escapeHtml(recipe.preview)}</p>
@@ -193,7 +203,7 @@ ${cards}
   <p class="empty" id="empty" hidden>No recipes match that search.</p>
 </div>`;
 
-  return layout({ base: '', title: SITE.title, description: SITE.description, bodyClass: 'page-index', main });
+  return layout({ base: './', title: SITE.title, description: SITE.description, bodyClass: 'page-index', main });
 }
 
 function renderRecipe(recipe) {
@@ -207,7 +217,7 @@ function renderRecipe(recipe) {
     : '';
 
   const main = `<div class="wrap">
-  <a class="back" href="../../">Back to all recipes</a>
+  <a class="back" href="../">Back to all recipes</a>
   <article class="recipe">
     <header class="recipe-head">
       <h1>${escapeHtml(recipe.title)}</h1>
@@ -224,7 +234,7 @@ function renderRecipe(recipe) {
 </div>`;
 
   return layout({
-    base: '../../',
+    base: '../',
     title: `${recipe.title} · ${SITE.title}`,
     description: recipe.description || recipe.preview,
     bodyClass: 'page-recipe',
@@ -238,10 +248,16 @@ function render404() {
     <p class="eyebrow">404</p>
     <h1>This page isn't on the menu</h1>
     <p class="lede">The recipe you're looking for doesn't exist or has moved.</p>
-    <p><a class="back" href="./">Back to all recipes</a></p>
+    <p><a class="back" href="${BASE_PATH}">Back to all recipes</a></p>
   </section>
 </div>`;
-  return layout({ base: '', title: `Not found · ${SITE.title}`, description: 'Page not found.', main });
+  return layout({
+    base: BASE_PATH,
+    title: `Not found · ${SITE.title}`,
+    description: 'Page not found.',
+    bodyClass: 'page-404',
+    main,
+  });
 }
 
 async function build() {
@@ -251,8 +267,12 @@ async function build() {
 
   const recipes = [];
   for (const file of files) {
+    const slug = file.replace(/\.md$/, '');
+    if (RESERVED_SLUGS.has(slug)) {
+      throw new Error(`recipes/${file} uses the reserved name "${slug}". Please rename it.`);
+    }
     const source = await readFile(join(recipesDir, file), 'utf8');
-    const recipe = parseRecipe(source, file.replace(/\.md$/, ''));
+    const recipe = parseRecipe(source, slug);
     recipes.push({ ...recipe, sections: renderSections(recipe.body) });
   }
 
@@ -266,13 +286,13 @@ async function build() {
   await writeFile(join(outDir, '404.html'), render404());
 
   for (const recipe of recipes) {
-    const dir = join(outDir, 'recipes', recipe.slug);
+    const dir = join(outDir, recipe.slug);
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, 'index.html'), renderRecipe(recipe));
   }
 
-  console.log(`Built ${recipes.length} recipes into dist/`);
-  for (const recipe of recipes) console.log(`  · ${recipe.title} → recipes/${recipe.slug}/`);
+  console.log(`Built ${recipes.length} recipes into dist/ (base ${BASE_PATH})`);
+  for (const recipe of recipes) console.log(`  · ${recipe.title} → ${recipe.slug}/`);
 }
 
 await build();

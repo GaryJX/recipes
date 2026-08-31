@@ -27,9 +27,15 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run build
 
-      - uses: actions/configure-pages@v5
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # 404.html is served for arbitrary URLs, so it needs to know the site's mount point.
+      - run: npm run build
+        env:
+          SITE_BASE: ${{ steps.pages.outputs.base_path }}
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
