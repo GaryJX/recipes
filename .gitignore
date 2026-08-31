@@ -1,0 +1,24 @@
+# Editor / assistant config
+.cursor/
+.vscode/
+.idea/
+*.swp
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.npm/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
